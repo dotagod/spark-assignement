@@ -25,25 +25,56 @@ async def bulk_create_profiles(profiles: List[Profile]) -> Dict[str, str]:
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.get("/match/{user_id}")
-async def get_matches(user_id: str, gender_preference: str = None) -> List[Dict[str, Any]]:
-    """Get top 8 matches for a user across all nearby quadrants.
+async def get_matches(
+    user_id: str, 
+    gender_preference: str = None,
+    page: int = 1,
+    page_size: int = 5
+) -> Dict[str, Any]:
+    """Get paginated matches for a user across all nearby quadrants.
     
     Args:
         user_id: ID of the user to find matches for
-        gender_preference: Optional gender preference ('male', 'female', or None for any)
+        gender_preference: Optional gender preference
+        page: Page number (1-indexed)
+        page_size: Number of matches per page
     """
     if user_id not in matchmaker.profiles:
         raise HTTPException(status_code=404, detail="User not found")
     
-    matches = matchmaker.get_matches(user_id, gender_preference=gender_preference)
-    return [
+    if page < 1:
+        raise HTTPException(status_code=400, detail="Page must be greater than 0")
+    
+    if page_size < 1 or page_size > 50:
+        raise HTTPException(status_code=400, detail="Page size must be between 1 and 50")
+    
+    limit = page_size
+    offset = (page - 1) * page_size
+    
+    all_matches = matchmaker.get_matches(user_id, limit=100, gender_preference=gender_preference)
+    total_matches = len(all_matches)
+    total_pages = (total_matches + page_size - 1) // page_size
+    
+    paginated_matches = all_matches[offset:offset + limit] if offset < total_matches else []
+    
+    results = [
         {
             "id": match_id,
             "score": score,
             "profile": matchmaker.profiles[match_id].dict()
         }
-        for match_id, score in matches
+        for match_id, score in paginated_matches
     ]
+    
+    return {
+        "page": page,
+        "page_size": page_size,
+        "total_pages": total_pages,
+        "total_matches": total_matches,
+        "results": results,
+        "has_next": page < total_pages,
+        "has_prev": page > 1
+    }
 
 @app.post("/exclusion/{user_id}/{excluded_id}/{exclusion_type}")
 async def add_exclusion(
