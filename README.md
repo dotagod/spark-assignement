@@ -19,16 +19,50 @@ When a profile is created or updated we:
 3. Compute pairwise scores **only** inside this 3×3 window (≈1 km radius).
 4. Persist results in `MatchStore` so `GET /match/{id}` becomes:
    * fetch cached list (constant-time)
-   * sort & slice (O(k log k)) instead of O(N²).
+   * sort & slice (O(k log k)).
 
 The trade-off: extra memory & write-time CPU for constant-time reads, ideal for interactive feeds.
 
 ## What Iʼd Change for Production
-- **Persistence** – replace in-memory dicts with Redis (geo sets) + Postgres (profiles, matches).
-- **Async workers** – offload pre-compute & re-compute to Celery/RQ triggered by a message bus.
-- **Observability & Ops** – structured logging, Prometheus metrics, OpenTelemetry traces, autoscaled pods.
-- **Security** – OAuth2, rate limiting, abuse detection.
-- **Smarter scoring** – vector embeddings (e.g. Sentence-Transformers + Faiss/PGVector) instead of hard-coded weights.
+- **Distributed Storage** – replace in-memory data structures with a distributed caching layer for fast access and a relational database for durable storage (e.g., Redis + PostgreSQL).
+- **Background Processing** – move computationally intensive tasks (pre-compute, re-compute) to asynchronous background workers with a message queue architecture (e.g., Celery + RabbitMQ).
+- **Project Structure** – reorganize code using a standard FastAPI project layout with separate directories for routes, models, services, schemas, and utilities to improve maintainability and testability. Recommended structure:
+  ```
+  spark/
+  ├── app/
+  │   ├── __init__.py
+  │   ├── api/
+  │   │   ├── __init__.py
+  │   │   ├── endpoints/
+  │   │   │   ├── __init__.py
+  │   │   │   ├── matches.py    # GET /match/{id} endpoint
+  │   │   │   └── profiles.py   # POST /profiles endpoint
+  │   │   └── router.py      # API router configuration
+  │   ├── core/
+  │   │   ├── __init__.py
+  │   │   ├── config.py     # App configuration
+  │   │   └── security.py   # Auth & security
+  │   ├── models/
+  │   │   ├── __init__.py
+  │   │   └── domain.py     # Current models.py
+  │   ├── schemas/
+  │   │   ├── __init__.py
+  │   │   └── api.py        # Pydantic schemas for API
+  │   └── services/
+  │       ├── __init__.py
+  │       ├── exclusion_manager.py
+  │       ├── geo_index.py
+  │       ├── match_store.py
+  │       ├── matchmaker.py
+  │       └── score_calculator.py
+  ├── tests/
+  ├── main.py         # Entry point
+  ├── requirements.txt
+  └── README.md
+  ```
+- **Observability & Ops** – structured logging and monitoring with centralized log management (e.g., ELK stack, Prometheus + Grafana).
+- **Security** – authentication, authorization, rate limiting, and abuse detection (e.g., OAuth2, JWT, API gateways).
+- **AI-Enhanced Matching** – replace hard-coded weights with machine learning models that understand semantic relationships between user interests and can adapt to user preferences over time (e.g., Sentence-Transformers, FAISS, PGVector).
 
 ---
 ### Quick Start
