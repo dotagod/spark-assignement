@@ -2,11 +2,7 @@ from typing import Dict, List, Tuple, Set
 
 class MatchStore:
     def __init__(self):
-        # Format: {quadrant: {user_id: {other_user_id: score}}}
         self.quadrant_scores: Dict[str, Dict[str, Dict[str, float]]] = {}
-        
-        # Precomputed matches for each user across all quadrants
-        # Format: {user_id: [(other_user_id, score), ...]}
         self.precomputed_matches: Dict[str, List[Tuple[str, float]]] = {}
 
     def ensure_quadrant_exists(self, quadrant: str, user_id: str) -> None:
@@ -19,11 +15,9 @@ class MatchStore:
     def store_match_score(self, user_id: str, other_id: str, user_gh: str, 
                          other_gh: str, score: float) -> None:
         """Store match score for both users in their respective quadrants."""
-        # Store in user's quadrant
         self.ensure_quadrant_exists(user_gh, user_id)
         self.quadrant_scores[user_gh][user_id][other_id] = score
 
-        # Store in other user's quadrant
         self.ensure_quadrant_exists(other_gh, other_id)
         self.quadrant_scores[other_gh][other_id][user_id] = score
 
@@ -48,24 +42,19 @@ class MatchStore:
         """
         all_scores = []
         
-        # Collect matches from all specified quadrants
         for quadrant in quadrants:
             if (quadrant in self.quadrant_scores and 
                 user_id in self.quadrant_scores[quadrant]):
                 for other_id, score in self.quadrant_scores[quadrant][user_id].items():
                     all_scores.append((other_id, score))
         
-        # Remove duplicates (if a user appears in multiple quadrants)
         unique_scores = {}
         for other_id, score in all_scores:
-            # Keep the highest score if user appears in multiple quadrants
             if other_id not in unique_scores or score > unique_scores[other_id]:
                 unique_scores[other_id] = score
         
-        # Store the precomputed matches
         self.precomputed_matches[user_id] = [(other_id, score) 
                                            for other_id, score in unique_scores.items()]
-        print(f"Stored {len(self.precomputed_matches[user_id])} precomputed matches for {user_id}")
     
     def get_precomputed_matches(self, user_id: str, excluded_users: Set[str]) -> List[Tuple[str, float]]:
         """Get precomputed matches for a user, excluding specified users.
@@ -75,7 +64,6 @@ class MatchStore:
         if user_id not in self.precomputed_matches:
             return []
         
-        # Filter out excluded users
         return [(other_id, score) for other_id, score in self.precomputed_matches[user_id]
                 if other_id not in excluded_users]
     
@@ -87,7 +75,6 @@ class MatchStore:
         """
         all_scores = []
         
-        # Collect matches from all specified quadrants
         for quadrant in quadrants:
             if (quadrant in self.quadrant_scores and 
                 user_id in self.quadrant_scores[quadrant]):
@@ -95,10 +82,8 @@ class MatchStore:
                     if other_id not in excluded_users:
                         all_scores.append((other_id, score))
         
-        # Remove duplicates (if a user appears in multiple quadrants)
         unique_scores = {}
         for other_id, score in all_scores:
-            # Keep the highest score if user appears in multiple quadrants
             if other_id not in unique_scores or score > unique_scores[other_id]:
                 unique_scores[other_id] = score
                 

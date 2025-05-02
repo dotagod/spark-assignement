@@ -35,35 +35,28 @@ class GeoIndex:
             precision = len(quadrant)
             
             # Define larger offsets based on precision to ensure different geohashes
-            # These offsets are much larger than before to guarantee different geohashes
-            lat_offset = 0.05  # About 5.5 km
-            lon_offset = 0.05  # Varies by latitude
+            lat_offset = 0.05
+            lon_offset = 0.05
             
-            # Start with the original quadrant
             result = [quadrant]
             
-            # Calculate the 8 adjacent cells with larger offsets
-            # North
+            # Adjacent cells
             result.append(geohash.encode(lat + lat_offset, lon, precision))
-            # Northeast
+
             result.append(geohash.encode(lat + lat_offset, lon + lon_offset, precision))
-            # East
+
             result.append(geohash.encode(lat, lon + lon_offset, precision))
-            # Southeast
+
             result.append(geohash.encode(lat - lat_offset, lon + lon_offset, precision))
-            # South
             result.append(geohash.encode(lat - lat_offset, lon, precision))
-            # Southwest
+
             result.append(geohash.encode(lat - lat_offset, lon - lon_offset, precision))
-            # West
+
             result.append(geohash.encode(lat, lon - lon_offset, precision))
-            # Northwest
+
             result.append(geohash.encode(lat + lat_offset, lon - lon_offset, precision))
             
-            # Return unique geohashes
-            unique_geohashes = list(set(result))
-            # print(f"Found {len(unique_geohashes)} neighbors for {quadrant}: {unique_geohashes}")
-            return unique_geohashes
+            return list(set(result))
         except Exception as e:
             print(f"Error calculating adjacent geohashes: {e}")
             # Fallback to just returning the original geohash
