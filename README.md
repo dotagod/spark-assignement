@@ -143,7 +143,7 @@ This approach trades increased memory usage and write-time computation for const
   │   └── services/
   ├── main.py
   └── README.md
-```
+  ```
 - **Observability & Ops** – structured logging and monitoring with centralized log management (e.g., ELK stack, Prometheus + Grafana).
 - **Security** – authentication, authorization, rate limiting, and abuse detection (e.g., OAuth2, JWT, API gateways).
 - **AI-Enhanced Matching** – replace hard-coded weights with machine learning models that understand semantic relationships between user interests and can adapt to user preferences over time (e.g., Sentence-Transformers, FAISS, PGVector).
