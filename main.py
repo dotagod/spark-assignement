@@ -15,6 +15,22 @@ async def create_profile(profile: Profile) -> Dict[str, str]:
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+@app.put("/profiles/{user_id}")
+async def update_profile(user_id: str, profile: Profile) -> Dict[str, str]:
+    """Update an existing user profile.
+    
+    Args:
+        user_id: ID of the user to update
+        profile: Updated profile data
+    """
+    try:
+        matchmaker.update_profile(user_id, profile)
+        return {"message": f"Profile updated successfully for user {user_id}"}
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 @app.post("/profiles/bulk")
 async def bulk_create_profiles(profiles: List[Profile]) -> Dict[str, str]:
     """Bulk create user profiles."""

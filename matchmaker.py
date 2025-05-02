@@ -20,6 +20,30 @@ class MatchMaker:
         profile_gh = self.geo_index.add_location(profile.id, profile.location)
         self.exclusion_manager.initialize_user(profile.id)
         self._precompute_matches(profile.id, profile_gh)
+        
+    def update_profile(self, profile_id: str, updated_profile: Profile) -> None:
+        """Update an existing profile and recompute match scores.
+        
+        Args:
+            profile_id: ID of the profile to update
+            updated_profile: New profile data
+            
+        Raises:
+            ValueError: If the profile doesn't exist
+        """
+        if profile_id not in self.profiles:
+            raise ValueError(f"Profile with ID {profile_id} not found")
+            
+        if updated_profile.id != profile_id:
+            updated_profile.id = profile_id
+            
+        old_gh = self.geo_index.get_geohash(profile_id)
+        if old_gh:
+            self.geo_index.remove_from_quadrant(old_gh, profile_id)
+            
+        self.profiles[profile_id] = updated_profile
+        new_gh = self.geo_index.add_location(profile_id, updated_profile.location)
+        self._precompute_matches(profile_id, new_gh)
 
     def bulk_add_profiles(self, profiles: List[Profile]) -> None:
         """Bulk add profiles and precompute match scores."""

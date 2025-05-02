@@ -3,13 +3,7 @@ import math
 import sys
 from models import Location
 
-# Make sure geohash is imported correctly
-try:
-    import geohash
-except ImportError:
-    print("Error importing geohash module. Make sure it's installed.")
-    print("Try running: pip install python-geohash")
-    sys.exit(1)
+import geohash
 
 class GeoIndex:
     def __init__(self, precision: int = 5):
@@ -30,11 +24,9 @@ class GeoIndex:
             return []
         
         try:
-            # Decode the geohash to get lat/lon
             lat, lon = geohash.decode(quadrant)
             precision = len(quadrant)
             
-            # Define larger offsets based on precision to ensure different geohashes
             lat_offset = 0.05
             lon_offset = 0.05
             
@@ -59,24 +51,38 @@ class GeoIndex:
             return list(set(result))
         except Exception as e:
             print(f"Error calculating adjacent geohashes: {e}")
-            # Fallback to just returning the original geohash
             return [quadrant]
 
     def get_users_in_quadrant(self, quadrant: str) -> Set[str]:
         """Get all users in a quadrant."""
         return self.quadrant_index.get(quadrant, set())
+    
+    def remove_from_quadrant(self, quadrant: str, user_id: str) -> bool:
+        """Remove a user from a geohash quadrant.
+        
+        Args:
+            quadrant: The geohash quadrant to remove from
+            user_id: The user ID to remove
+            
+        Returns:
+            bool: True if the user was found and removed, False otherwise
+        """
+        if quadrant in self.quadrant_index and user_id in self.quadrant_index[quadrant]:
+            self.quadrant_index[quadrant].remove(user_id)
+            return True
+        return False
         
     def get_geohash(self, user_id: str) -> str:
         """Get the geohash quadrant for a user."""
         for quadrant, users in self.quadrant_index.items():
             if user_id in users:
                 return quadrant
-        return ""  # Return empty string if user not found
+        return ""
 
     @staticmethod
     def calculate_distance(loc1: Location, loc2: Location) -> float:
         """Calculate distance between two locations in kilometers."""
-        R = 6371  # Earth's radius in kilometers
+        R = 6371
         lat1, lon1 = math.radians(loc1.lat), math.radians(loc1.lon)
         lat2, lon2 = math.radians(loc2.lat), math.radians(loc2.lon)
         
