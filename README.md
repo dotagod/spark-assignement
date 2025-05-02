@@ -103,7 +103,7 @@ This approach trades increased memory usage and write-time computation for const
 ## What Iʼd Change for Production
 - **Distributed Storage** – replace in-memory data structures with a distributed caching layer for fast access and a relational database for durable storage (e.g., Redis + PostgreSQL).
 - **Background Processing** – move computationally intensive tasks (pre-compute, re-compute) to asynchronous background workers with a message queue architecture (e.g., Celery + RabbitMQ).
-- **Project Structure** – The codebase now uses a pure service-oriented architecture with self-contained services. Current structure:
+- **Project Structure** – The codebase uses a pure service-oriented architecture with self-contained services. Current structure:
   ```
   spark/
   ├── main.py                  # FastAPI application entry point
@@ -127,7 +127,7 @@ This approach trades increased memory usage and write-time computation for const
   └── README.md                # Documentation
   ```
   
-  For further improvements, consider organizing the API endpoints into route modules:
+- **Future Folder Structure** – For further improvements, we can consider organizing the codebase with the following structure:
   ```
   spark/
   ├── app/
@@ -137,10 +137,13 @@ This approach trades increased memory usage and write-time computation for const
   │   │   │   └── profiles.py   # POST /profiles endpoint
   │   │   └── router.py      # API router configuration
   │   ├── models/
+  │   ├── schemas/           # Pydantic schemas for request/response validation
+  │   │   ├── profile.py     # Profile request/response models
+  │   │   └── match.py       # Match response models
   │   └── services/
   ├── main.py
   └── README.md
-  ```
+```
 - **Observability & Ops** – structured logging and monitoring with centralized log management (e.g., ELK stack, Prometheus + Grafana).
 - **Security** – authentication, authorization, rate limiting, and abuse detection (e.g., OAuth2, JWT, API gateways).
 - **AI-Enhanced Matching** – replace hard-coded weights with machine learning models that understand semantic relationships between user interests and can adapt to user preferences over time (e.g., Sentence-Transformers, FAISS, PGVector).
