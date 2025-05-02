@@ -31,16 +31,12 @@ async def create_profile(profile: Profile) -> Dict[str, str]:
         exclusion_service = ServiceLocator.get(IExclusionService)
         precompute_service = ServiceLocator.get(IPrecomputeService)
         
-        # Add the profile
         profile_service.add_profile(profile)
         
-        # Index the profile location
         geo_hash = geo_service.index_profile(profile.id, profile.location)
         
-        # Initialize exclusions
         exclusion_service.initialize_user(profile.id)
         
-        # Precompute matches
         precompute_service.precompute_matches(profile.id)
         
         return {"message": f"Profile created successfully for user {profile.id}"}
@@ -64,22 +60,17 @@ async def update_profile(user_id: str, profile: Profile) -> Dict[str, str]:
         if user_id not in profiles:
             raise ValueError(f"Profile with ID {user_id} not found")
             
-        # Ensure ID consistency
         if profile.id != user_id:
             profile.id = user_id
             
-        # Remove from old geohash quadrant if exists
         old_gh = geo_service.get_profile_geohash(user_id)
         if old_gh:
             geo_service.remove_from_index(old_gh, user_id)
             
-        # Update the profile
         profile_service.update_profile(user_id, profile)
         
-        # Add to new quadrant
         geo_service.index_profile(user_id, profile.location)
         
-        # Recompute matches
         precompute_service.precompute_matches(user_id)
         
         return {"message": f"Profile updated successfully for user {user_id}"}
@@ -97,18 +88,13 @@ async def bulk_create_profiles(profiles: List[Profile]) -> Dict[str, str]:
         exclusion_service = ServiceLocator.get(IExclusionService)
         precompute_service = ServiceLocator.get(IPrecomputeService)
         
-        # Add profiles
         profile_service.bulk_add_profiles(profiles)
         
-        # Process each profile
         for profile in profiles:
-            # Index location
             geo_service.index_profile(profile.id, profile.location)
             
-            # Initialize exclusions
             exclusion_service.initialize_user(profile.id)
             
-            # Precompute matches
             precompute_service.precompute_matches(profile.id)
         
         return {"message": f"Profiles created successfully for users {', '.join([p.id for p in profiles])}"}
@@ -243,13 +229,11 @@ async def seed_dummy_data(count: int = 100, base_lat: float = 13.7563, base_lon:
         raise HTTPException(status_code=400, detail="Count must be between 1 and 10000")
         
     try:
-        # Get services
         profile_service = ServiceLocator.get(IProfileService)
         geo_service = ServiceLocator.get(IGeoService)
         exclusion_service = ServiceLocator.get(IExclusionService)
         precompute_service = ServiceLocator.get(IPrecomputeService)
         
-        # Generate dummy user data
         users_data = generate_user_data(
             num_users=count,
             base_lat=base_lat,
@@ -257,7 +241,6 @@ async def seed_dummy_data(count: int = 100, base_lat: float = 13.7563, base_lon:
             radius=radius
         )
         
-        # Convert to Profile objects
         profiles = []
         for user in users_data:
             profile = Profile(
@@ -269,18 +252,13 @@ async def seed_dummy_data(count: int = 100, base_lat: float = 13.7563, base_lon:
             )
             profiles.append(profile)
         
-        # Add profiles
         profile_service.bulk_add_profiles(profiles)
         
-        # Process each profile
         for profile in profiles:
-            # Index location
             geo_service.index_profile(profile.id, profile.location)
             
-            # Initialize exclusions
             exclusion_service.initialize_user(profile.id)
             
-            # Precompute matches
             precompute_service.precompute_matches(profile.id)
         
         return {
