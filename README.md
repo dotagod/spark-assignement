@@ -1,6 +1,6 @@
 # Lightning-Fast Geo-Aware Matchmaking API
 
-A compact yet performant matchmaking engine written in Python 3.12 and served through FastAPI.  It shows how dating / friend-finding products can blend geospatial indexing, weighted scoring and **aggressive pre-computation** to answer match queries in a few milliseconds.
+A compact yet performant matchmaking engine written in Python 3.12 and served through FastAPI.  It shows how dating / friend-finding products can blend geospatial indexing, weighted scoring and **comprehensive pre-computation strategy** to answer match queries in a few milliseconds.
 
 ## High-Level Architecture
 - **FastAPI layer** – thin REST façade; completely stateless.
@@ -63,11 +63,11 @@ When a profile is created or updated we:
 1. Encode its lat/lon into a 5-character geohash.
 2. Enumerate the eight neighbouring cells plus the original.
 3. Compute pairwise scores **only** inside this 3×3 window (≈1 km radius).
-4. Persist results in `MatchStore` so `GET /match/{id}` becomes:
+4. Persist results in `MatchStore` so `GET /profiles/{id}/matches` becomes:
    * fetch cached list (constant-time)
    * sort & slice (O(k log k)).
 
-The trade-off: extra memory & write-time CPU for constant-time reads, ideal for interactive feeds.
+The trade-off: extra memory & write-time CPU for constant-time reads, optimized for read-heavy workloads.
 
 ## What Iʼd Change for Production
 - **Distributed Storage** – replace in-memory data structures with a distributed caching layer for fast access and a relational database for durable storage (e.g., Redis + PostgreSQL).
@@ -81,7 +81,7 @@ The trade-off: extra memory & write-time CPU for constant-time reads, ideal for 
   │   │   ├── __init__.py
   │   │   ├── endpoints/
   │   │   │   ├── __init__.py
-  │   │   │   ├── matches.py    # GET /match/{id} endpoint
+  │   │   │   ├── matches.py    # GET /profiles/{id}/matches endpoint
   │   │   │   └── profiles.py   # POST /profiles endpoint
   │   │   └── router.py      # API router configuration
   │   ├── core/
@@ -118,26 +118,38 @@ The trade-off: extra memory & write-time CPU for constant-time reads, ideal for 
 # Install dependencies
 pip install -r requirements.txt
 
-# Run the server with auto-reload
+# Run tests (optional)
+python3 tests/run_tests.py
+
+# Start the server
 uvicorn main:app --reload
 
-# Generate and upload dummy data
+# In a separate terminal, generate and upload dummy data
 python generate_dummy_data.py
 
-#check dummy data
-#http://localhost:8000/get_all_profiles
+# Or use the API endpoint to generate data
+# POST http://localhost:8000/data/seed?count=100
+
+# View all profiles
+# GET http://localhost:8000/profiles
 ```
 
 #### Docker Deployment
 ```bash
 # Build the Docker image
-docker build -t spark-matchmaker .
+docker build -t spark-app .
 
 # Run the container
-docker run -p 8000:8000 spark-matchmaker
+docker run -p 8000:8000 spark-app
 ```
 
 The Docker container automatically seeds 100 dummy profiles on startup using the included `generate_dummy_data.py` script.
 
 #check dummy data
-#http://localhost:8000/get_all_profiles
+#http://localhost:8000/profiles
+
+
+#### Swagger URL
+http://localhost:8000/docs
+
+
