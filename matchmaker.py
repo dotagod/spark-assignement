@@ -75,7 +75,7 @@ class MatchMaker:
         user_gh = self.geo_index.get_geohash(user_id)
         
         excluded = self.exclusion_manager.get_excluded_users(user_id)
-        excluded.add(user_id)  # Make sure user doesn't match with themselves
+        excluded.add(user_id)
         
         scores = self.match_store.get_precomputed_matches(user_id, excluded)
         if gender_preference:

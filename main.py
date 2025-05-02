@@ -32,13 +32,8 @@ async def get_matches(user_id: str, gender_preference: str = None) -> List[Dict[
         user_id: ID of the user to find matches for
         gender_preference: Optional gender preference ('male', 'female', or None for any)
     """
-    print(matchmaker.profiles)
     if user_id not in matchmaker.profiles:
         raise HTTPException(status_code=404, detail="User not found")
-    
-    # Validate gender_preference if provided
-    if gender_preference and gender_preference not in ["male", "female"]:
-        raise HTTPException(status_code=400, detail="Invalid gender preference. Must be 'male', 'female', or not specified.")
     
     matches = matchmaker.get_matches(user_id, gender_preference=gender_preference)
     return [
@@ -78,18 +73,3 @@ async def get_profiles_by_quadrant(quadrant: str) -> List[Dict[str, Any]]:
     user_ids = matchmaker.geo_index.get_users_in_quadrant(quadrant)
     return [matchmaker.profiles[user_id].dict() for user_id in user_ids]
 
-@app.post("/refresh_matches")
-async def refresh_matches() -> Dict[str, Any]:
-    """Refresh precomputed matches for all profiles.
-    
-    This is useful after updating the adjacency calculation logic.
-    """
-    count = 0
-    for user_id, profile in matchmaker.profiles.items():
-        # Get the user's quadrant
-        user_gh = matchmaker.geo_index.add_location(user_id, profile.location)
-        # Recompute matches
-        matchmaker._precompute_matches(user_id, user_gh)
-        count += 1
-    
-    return {"message": f"Refreshed matches for {count} profiles"}
